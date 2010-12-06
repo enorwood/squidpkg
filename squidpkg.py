@@ -13,10 +13,15 @@ def main():
     #Find local squidpkg directories if they exist, create them if not
     lctemp = os.path.join(localconfig, 'temp')
     lcrepo = os.path.join(localconfig, 'repo')
+    if options.debug:
+        print (lctemp)
+        print (lcrepo)
     if not os.path.isdir(localconfig):
         try:
             os.makedirs(localconfig)
             writeToLog('squidpkg directory created.', 'INFO')
+            if options.verbose:
+                print ('squidpkg directory created.')
                 
         except OSError as e:
             writeToLog(e.args, 'ERROR')
@@ -51,6 +56,8 @@ def getHostProf():
     
     for element in hostIter:
         hostnm = element.attrib['name']
+        if options.debug:
+            print (hostnm)
         
         if hostnm == shorthost:
             exprofList.append(element.attrib['profile-id'])
@@ -59,7 +66,7 @@ def getHostProf():
                 exprofList.append(id.attrib['id'])
             writeToLog(element.attrib['profile-id'] + ' found.', 'INFO')
             if options.verbose:
-                print (exprofList)
+                print (exprofList + ' found.')
             exactmatch = exprofList
             break
         else:
@@ -78,7 +85,7 @@ def getHostProf():
                     inprofList.append(id.attrib['id'])
                 writeToLog(match.group(0) + ' found.', 'INFO')
                 if options.verbose:
-                    print (inprofList)
+                    print (inprofList + ' found.')
                 inexactmatch =  inprofList
             else:
                 inexactmatch = None
@@ -146,6 +153,8 @@ def installPackage(package):
     else:
         if dependsIter:
             for each in dependsIter:
+                if options.debug:
+                    print (each.attrib['package-id'])
                 installPackage(each.attrib['package-id'])
         
         if not checkIter:
@@ -162,6 +171,8 @@ def installPackage(package):
                     p = subprocess.Popen(cmd, stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
                     stdout_text, stderr_text = p.communicate()
                     writeToLog(str(stdout_text), 'INFO')
+                    if options.verbose:
+                        print (stdout_text)
                     if stderr_text:
                         writeToLog(str(stderr_text), 'ERROR')
                         if options.verbose:
@@ -187,6 +198,8 @@ def installPackage(package):
         
         for item in checkIter:
             checkLine = item.attrib['version']
+            if options.debug:
+                print (checkLine)
             
             if localIter:
                 
@@ -210,10 +223,12 @@ def installPackage(package):
                             try:
                                 p = subprocess.Popen(cmd, stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
                                 stdout_text, stderr_text = p.communicate()
-                                writeToLog(str(stdout_text), 'INFO')
+                                writeToLog(stdout_text, 'INFO')
+                                if options.verbose:
+                                    print (stdout_text)
                                 if stderr_text:
                                     updateconfig = False
-                                    writeToLog(str(stderr_text), 'ERROR')
+                                    writeToLog(stderr_text, 'ERROR')
                                     if options.verbose:
                                         print (stderr_text)
                                     break
@@ -233,6 +248,8 @@ def installPackage(package):
                                     localRoot.remove(item)
                             elem.set('name', name)
                             elem.set('version', checkLine)
+                            if options.debug:
+                                print (elem)
                             localRoot.append(elem)
                             writeToLog('Upgrade complete.', 'INFO')
                             if options.verbose:
@@ -277,6 +294,8 @@ def installPackage(package):
                                     localRoot.remove(item)
                             elem.set('name', name)
                             elem.set('version', checkLine)
+                            if options.debug:
+                                print (elem)
                             localRoot.append(elem)
                             writeToLog('Install complete.', 'INFO')
                             if options.verbose:
@@ -321,6 +340,8 @@ def installPackage(package):
                             localRoot.remove(item)
                     elem.set('name', name)
                     elem.set('version', checkLine)
+                    if options.debug:
+                        print (elem)
                     localRoot.append(elem)
                 else:
                     writeToLog('Install Error. Config not updated.', 'ERROR')
@@ -335,11 +356,15 @@ def installPackage(package):
 def installProfile(profile):
     #Parse profiles.xml for list of packages in the given profile. Then call installer function for each package. Also parse for profiles to remove, and call removal function.
     writeToLog('Finding profile...', 'INFO')
+    if options.verbose:
+        print ('Finding profile...')
     profTree = parseXML(os.path.join(squidpkg_dir, 'profiles.xml'))
     profIter = profTree.getiterator('profile')
     
     for element in profIter:
         profileID = element.attrib['id']
+        if options.debug:
+            print (profileID)
         
         try:
             match = re.search(profileID, profile)  
@@ -349,6 +374,15 @@ def installProfile(profile):
         if match:
             packageIter = element.getiterator('package')
             writeToLog(match.group(0) + ' profile found.', 'INFO')
+            if options.verbose:
+                print(match.group(0) + ' profile found.')
+            break
+        
+    if not match:
+        writeToLog('Profile ' + profile + ' not found in profiles.xml. Create a profile for ' + profile + '.', 'ERROR')
+        if options.verbose:
+            print ('Profile ' + profile + ' not found in profiles.xml. Create a profile for ' + profile + '.')
+        exit(2)
 
     for subelement in packageIter:
         packageID = None
@@ -361,6 +395,8 @@ def installProfile(profile):
                 #writeToLog('Not a package command', 'INFO')
         if packageID:
             writeToLog('Checking ' + packageID + '...', 'INFO')
+            if options.verbose:
+                print ('Checking ' + packageID + '...')
             installPackage(packageID)
         else:
             try:
@@ -371,28 +407,31 @@ def installProfile(profile):
                     #writeToLog('Not a remove command', 'INFO')
             if removeID:
                 writeToLog('Removing ' + removeID + '...', 'INFO')
+                if options.verbose:
+                    print ('Removing ' + removeID + '...')
                 removePackage(removeID)
 
     writeToLog('Finished installing profile.', 'INFO')
+    if options.verbose:
+        print ('Finished installing profile')
 
 def loadPackages():
     #Not in use. Load all the packages into a list.
     packlist = os.listdir(packages_dir)
     trees = []
     packs = []
-    fulllist = []
+    fullList = []
     for file in packlist:
         tree = parseXML(os.path.join(packages_dir, file))
         packiter = tree.getiterator('package')
         packs.append(packiter)
     for pack in packs:
         for elm in pack:
-            fulllist.append(elm.attrib['id'])
+            fullList.append(elm.attrib['id'])
             
-    global packagelist
-    packagelist = fulllist
+    packagelist = fullList
     if options.verbose:
-        print (fulllist)
+        print (fullList)
     #return fulllist
 
 def matchConfigName(package):
@@ -403,6 +442,8 @@ def matchConfigName(package):
     pkgs = localTree.findall('package')
     
     for p in pkgs:
+        if options.debug:
+            print (p.attrib['name'])
         if p.attrib['name'] == package:
             return True
         else:
@@ -417,6 +458,8 @@ def matchConfigVer(checkLine):
     pkgs = localTree.findall('package')
     
     for p in pkgs:
+        if options.debug:
+            print (p.attrib['version'])
         try:
             matchver = re.search(p.attrib['version'], checkLine)
             testver = matchver.group(0)
@@ -467,9 +510,9 @@ def removePackage(package):
             try:
                 p = subprocess.Popen(cmd, stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True)
                 stdout_text, stderr_text = p.communicate()
-                writeToLog(str(stdout_text), 'INFO')
+                writeToLog(stdout_text, 'INFO')
                 if stderr_text:
-                    writeToLog(str(stderr_text), 'ERROR')
+                    writeToLog(stderr_text, 'ERROR')
                     if options.verbose:
                         print (stderr_text)
                     break
@@ -480,16 +523,18 @@ def removePackage(package):
                 for a in e.args:
                     error = error + ' ' + str(a)
                 writeToLog(error, 'ERROR')
+                if options.verbose:
+                    print (error)
                 break
         
         if not stderr_text:
-            writeToLog('Uninstall complete. Local config was not updated.', 'INFO')
+            writeToLog('Uninstall complete.', 'INFO')
             if options.verbose:
                 print('Uninstall Complete')
         else:
-            writeToLog('STDERR Occured. Pacakge not uninstalled', 'ERROR')
+            writeToLog('STDERR Occured. Package not uninstalled.', 'ERROR')
             if options.verbose:
-                print ('STDERR Occurred')
+                print ('STDERR Occurred. Package not uninstalled.')
                     
         if updateconfig:
             elem = ET.Element('package')
@@ -500,7 +545,7 @@ def removePackage(package):
         else:
             writeToLog('Uninstall Error. Config not updated.', 'ERROR')
             if options.verbose:
-                print('Uninstall Error')
+                print('Uninstall Error. Config not updated.')
     
     localTree.write(localconfigfile)
     writeToLog('Finished uninstalling ' + package, 'INFO')
@@ -527,7 +572,8 @@ def searchPackages(package):
             else:
                 continue
     if not ispkg:
-        print ('No package')
+        writeToLog('Package ' + package + ' not found in packages.', 'INFO')
+        print ('Package ' + package + ' not found in packages.')
         return None
 
 def writeToLog(line, status):
@@ -558,6 +604,7 @@ if __name__ == '__main__':
     parser.add_option('-l', '--log', action='store', type='string', dest='log', help='Set path of log file, else defaults to root directory.')
     parser.add_option('-t', '--hostname', action='store', type='string', dest='host', help='Set hostname variable manually')
     parser.add_option('-v', '--verbose', action='store_true', dest='verbose')
+    parser.add_option('-d', '--debug', action='store_true', dest='debug')
     (options, args) = parser.parse_args()
     if options.software:
         software = os.path.abspath(options.software)
@@ -593,6 +640,10 @@ if __name__ == '__main__':
             shorthost = hostsplit[0]
         temppath = os.path.join(squidpkg_dir, ''.join(['squidpkg_', shorthost, '.log']))
         logfile = os.path.abspath(temppath)
+    if options.debug:
+        options.verbose = True
+        
+        
     # Someone is launching this directly
     main()
         
