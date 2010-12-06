@@ -602,9 +602,9 @@ if __name__ == '__main__':
     parser.add_option('-r', '--root', action='store', type='string', dest='root', help='Set path of squidpkg root directory.')
     parser.add_option('-c', '--config', action='store', type='string', dest='config', help='Set path of local config XML, else defaults to root directory.')
     parser.add_option('-l', '--log', action='store', type='string', dest='log', help='Set path of log file, else defaults to root directory.')
-    parser.add_option('-t', '--hostname', action='store', type='string', dest='host', help='Set hostname variable manually')
-    parser.add_option('-v', '--verbose', action='store_true', dest='verbose')
-    parser.add_option('-d', '--debug', action='store_true', dest='debug')
+    parser.add_option('-t', '--hostname', action='store', type='string', dest='host', help='Set hostname variable manually.')
+    parser.add_option('-v', '--verbose', action='store_true', dest='verbose', help='Show verbose output.')
+    parser.add_option('-d', '--debug', action='store_true', dest='debug' help='Show more verbose output. Automatically sets -v in htis mode.')
     (options, args) = parser.parse_args()
     if options.software:
         software = os.path.abspath(options.software)
