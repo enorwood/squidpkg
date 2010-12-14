@@ -66,7 +66,7 @@ def getHostProf():
                 exprofList.append(id.attrib['id'])
             writeToLog(element.attrib['profile-id'] + ' found.', 'INFO')
             if options.verbose:
-                print (exprofList + ' found.')
+                print (str(exprofList) + ' found.')
             exactmatch = exprofList
             break
         else:
@@ -85,7 +85,7 @@ def getHostProf():
                     inprofList.append(id.attrib['id'])
                 writeToLog(match.group(0) + ' found.', 'INFO')
                 if options.verbose:
-                    print (inprofList + ' found.')
+                    print (str(inprofList) + ' found.')
                 inexactmatch =  inprofList
             else:
                 inexactmatch = None
