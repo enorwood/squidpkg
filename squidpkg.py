@@ -604,7 +604,7 @@ if __name__ == '__main__':
     parser.add_option('-l', '--log', action='store', type='string', dest='log', help='Set path of log file, else defaults to root directory.')
     parser.add_option('-t', '--hostname', action='store', type='string', dest='host', help='Set hostname variable manually.')
     parser.add_option('-v', '--verbose', action='store_true', dest='verbose', help='Show verbose output.')
-    parser.add_option('-d', '--debug', action='store_true', dest='debug' help='Show more verbose output. Automatically sets -v in htis mode.')
+    parser.add_option('-d', '--debug', action='store_true', dest='debug', help='Show more verbose output. Automatically sets -v in this mode.')
     (options, args) = parser.parse_args()
     if options.software:
         software = os.path.abspath(options.software)
