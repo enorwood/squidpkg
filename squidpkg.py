@@ -203,15 +203,14 @@ def installPackage(package):
             
             if localIter:
                 
-                    instName = matchConfigName(package)
-                    instVer = matchConfigVer(checkLine)
+                    instance = matchConfig(package, checkLine)
                         
-                    if instName and instVer:
+                    if instance == 0:
                         writeToLog(package + ' already installed.', 'INFO')
                         if options.verbose:
                             print (package, 'already installed')
                         
-                    elif instName:
+                    elif instance == 1:
                         writeToLog('Version mismatch. Upgrading...', 'INFO')
                         if options.verbose:
                             print ('Version mismatch. Upgrading...')
@@ -434,45 +433,22 @@ def loadPackages():
         print (fullList)
     #return fulllist
 
-def matchConfigName(package):
+def matchConfig(package, checkLine):
     #Check if the package name matches the locally installed name
     localTree = parseXML(localconfigfile)
-    localIter = localTree.getiterator('package')
-    localRoot = localTree.getroot()
     pkgs = localTree.findall('package')
     
     for p in pkgs:
         if options.debug:
             print (p.attrib['name'])
-        if p.attrib['name'] == package:
-            return True
-        else:
-            continue
-    return False
-    
-def matchConfigVer(checkLine):
-    #Check if the packge version matches the lcaolly installed version
-    localTree = parseXML(localconfigfile)
-    localIter = localTree.getiterator('package')
-    localRoot = localTree.getroot()
-    pkgs = localTree.findall('package')
-    
-    for p in pkgs:
-        if options.debug:
             print (p.attrib['version'])
-        try:
-            matchver = re.search(p.attrib['version'], checkLine)
-            testver = matchver.group(0)
-            #print (matchver.group(0) + ' This is the regex') 
-        except AttributeError as e:
-            #print (e.args, checkLine)
-            continue
-        
-        if matchver:
-            return True
+        if p.attrib['name'] == package and p.attrib['version'] == checkLine:
+            return 0
+        elif p.attrib['name'] == package and p.attrib['version'] != checkLine:
+            return 1
         else:
-            return False
-
+            continue
+    return 2
 
 def parseXML(xml_file):
     #Parse an XML file. Exit if badly formed.
